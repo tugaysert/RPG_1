@@ -16,8 +16,9 @@ namespace RPG.Combat
 
        
         Health target;
+        //oyun baslar baslamaz vurabilelim
+        public float timeSinceLastAttack = Mathf.Infinity;
 
-        public float timeSinceLastAttack = 0;
         private void Update()
         {
             timeSinceLastAttack += Time.deltaTime;
@@ -38,8 +39,7 @@ namespace RPG.Combat
         }
         //fighter.cs
         private void AttackBehaviour()
-        {
-            
+        { 
             transform.LookAt(target.transform);
             
             if (timeSinceLastAttack >= timeBetweenAttacks)
@@ -72,7 +72,7 @@ namespace RPG.Combat
             return Vector3.Distance(transform.position, target.transform.position) < weaponRange;
         }
 
-        public bool CanAttack(CombatTarget combatTarget)
+        public bool CanAttack(GameObject combatTarget)
         {
             if (combatTarget == null) return false;
             Health targetToTest = combatTarget.GetComponent<Health>();
@@ -80,7 +80,7 @@ namespace RPG.Combat
             
         }
 
-        public void Attack(CombatTarget combatTarget)
+        public void Attack(GameObject combatTarget)
         {
             
             GetComponent<ActionScheduler>().StartAction(this);

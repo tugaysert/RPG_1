@@ -1,4 +1,5 @@
 using RPG.Combat;
+using RPG.Core;
 using RPG.Movement;
 using System;
 using System.Collections;
@@ -10,10 +11,16 @@ using UnityEngine;
 namespace RPG.Control { 
 public class PlayerController : MonoBehaviour
 {
-    private void Update()
-        {
-            
+        Health health;
 
+        private void Start()
+        {
+            health = GetComponent<Health>();
+        }
+        private void Update()
+        {
+
+            if (health.IsDead()) return;
             if (InteractWithCombat()) return;
             if (InteractWithMovement()) return;
             //print("Nothing to do.");
@@ -28,11 +35,13 @@ public class PlayerController : MonoBehaviour
             foreach (RaycastHit hit in hits)
             {
                 CombatTarget target = hit.transform.gameObject.GetComponent<CombatTarget>();
-                if (/*target == null*/ !GetComponent<Fighter>().CanAttack(target)) continue;
+                if(target == null) continue;    
+                
+                if (!GetComponent<Fighter>().CanAttack(target.gameObject)) continue;
                 if (Input.GetMouseButtonDown(0))
                 {
                     
-                    GetComponent<Fighter>().Attack(target);
+                    GetComponent<Fighter>().Attack(target.gameObject);
                 }
                 //tiklamadan bile bazi islevler getirebiliriz, ornegin attack mode'a gecen cursor
                 //dolayisiyla return'u buraya koyduk
