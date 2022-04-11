@@ -27,7 +27,7 @@ namespace RPG.Combat
          
             if (!GetIsInRange())
             {
-                GetComponent<Mover>().MoveTo(target.transform.position);
+                GetComponent<Mover>().MoveTo(target.transform.position, 1f);
                 
             }
             else
@@ -94,7 +94,8 @@ namespace RPG.Combat
             StopAttack();
 
             target = null;
-
+            //cinematic control remover cancel verdigi zaman eger combat icin yuruyorsa alttaki kod olmazsa durmaz.
+            GetComponent<Mover>().Cancel();
         }
 
         private void StopAttack()

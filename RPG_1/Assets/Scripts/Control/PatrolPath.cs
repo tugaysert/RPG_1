@@ -25,6 +25,7 @@ namespace RPG.Control
             return i+1;
         }
 
+        //patrolpath
         public Vector3 GetWaypoint(int i)
         {
             return transform.GetChild(i).position;

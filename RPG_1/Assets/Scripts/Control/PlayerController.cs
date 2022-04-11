@@ -60,7 +60,7 @@ public class PlayerController : MonoBehaviour
             {
                 if (Input.GetMouseButton(0))
                 {
-                    GetComponent<Mover>().StartMoveAction(hit.point);
+                    GetComponent<Mover>().StartMoveAction(hit.point, 1f);
                     
                 }
                 return true;
