@@ -7,10 +7,16 @@ namespace RPG.SceneManagement
     public class Fader : MonoBehaviour
     {
         CanvasGroup canvasGroup;
-        private void Start()
+        private void Awake()
         {
             canvasGroup = GetComponent<CanvasGroup>();                    
         }
+
+        public void FadeOutImmediate()
+        {
+            canvasGroup.alpha = 1.0f;
+        }
+       
         public IEnumerator FadeOut(float time)
         {     
             while(canvasGroup.alpha < 1)

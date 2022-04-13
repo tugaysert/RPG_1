@@ -1,4 +1,5 @@
 using RPG.Core;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -7,34 +8,47 @@ using UnityEngine.AI;
 
 namespace RPG.Saving
 {
-    //yeni unity'de prefab scene fln oldugu icin executineditmode deprecate olmus
+    
     [ExecuteAlways]
     public class SaveableEntity : MonoBehaviour
     {
+        
 
-        //SerializeField yapmak persistent safe yapacak
-        //default value'ye set ettik ki, degisiklige ihtiyac yok denilebilsin fln
+
         [SerializeField] string uniqueIdentifier = "";
+
+        //bu degiskeni sahne icerisinde kopyalanan gameobjelerin ayn? UUID'e sahip olmamas? icin yaratt?k.
+        static Dictionary<string, SaveableEntity> globalLookup = new Dictionary<string, SaveableEntity>();
 
         public string GetUniqueIdentifier()
         {
             return uniqueIdentifier;
         }
 
+      
         public object CaptureState()
         {
-            print("Capturing state for" + GetUniqueIdentifier());
-                return new SerializableVector3(transform.position);
+            Dictionary<string, object> state = new Dictionary<string, object>();
+
+            //SaveableEntity scriptinin attach oldu?u her bir gameobje içerisinde
+            //ISaveable olan componentlar? buluyor (Mover,Health vs.) ve bir dictionary olarak kaydediyoruz.
+            foreach (ISaveable saveable in GetComponents<ISaveable>())
+            {
+               state[saveable.GetType().ToString()] = saveable.CaptureState();
+            }   
+            return state;
         }
 
+        //SaveableEntity.cs
         public void RestoreState(object state)
         {
-            print("Restoring state for" + GetUniqueIdentifier());
-            SerializableVector3 position = (SerializableVector3) state;
-            GetComponent<NavMeshAgent>().enabled = false;
-            transform.position = position.ToVector3();
-            GetComponent<NavMeshAgent>().enabled = true;
-            GetComponent<ActionScheduler>().CancelCurrentAction();
+           
+            Dictionary<string, object>  stateDict = (Dictionary<string, object>)state;
+            foreach (ISaveable saveable in GetComponents<ISaveable>())
+            {
+                string typeString = saveable.GetType().ToString();
+                if (stateDict.ContainsKey(typeString)) saveable.RestoreState(stateDict[typeString]);
+            }
         }
 
 #if UNITY_EDITOR
@@ -50,11 +64,38 @@ namespace RPG.Saving
             SerializedObject serializedObject = new SerializedObject(this);
             SerializedProperty property = serializedObject.FindProperty("uniqueIdentifier"); 
 
-            if(string.IsNullOrEmpty(property.stringValue))
+            if(string.IsNullOrEmpty(property.stringValue) || !IsUnique(property.stringValue))
             {
                 property.stringValue = System.Guid.NewGuid().ToString();
                 serializedObject.ApplyModifiedProperties();
             }
+
+            //globalLookup static oldugu icin sorun yok 
+            globalLookup[property.stringValue] = this;
+        }
+
+
+        private bool IsUnique(string candidate)
+        {
+            if (!globalLookup.ContainsKey(candidate)) return true;
+
+            if (globalLookup[candidate] == this) return true;
+
+            if ((globalLookup[candidate] == null)) 
+            {
+                
+                globalLookup.Remove(candidate);
+                return true;
+            }
+
+            if(globalLookup[candidate].GetUniqueIdentifier() != candidate)
+            {
+                globalLookup.Remove(candidate);
+                return true;
+            }
+
+            return false;    
+            
         }
 #endif
     }

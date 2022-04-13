@@ -1,3 +1,4 @@
+using RPG.Saving;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -33,23 +34,29 @@ namespace RPG.SceneManagement
             {
                 Debug.LogError("Scene to load not set.");
                 yield break;
-            }
-
-          
+            }         
             DontDestroyOnLoad(gameObject);
             Fader fader = FindObjectOfType<Fader>();
+            SavingWrapper savingWrapper = FindObjectOfType<SavingWrapper>();
 
-            yield return fader.FadeOut(fadeOutTime);       
+            yield return fader.FadeOut(fadeOutTime);
+
+            savingWrapper.Save();
+
             yield return SceneManager.LoadSceneAsync(sceneToLoad);
-          
 
+            savingWrapper.Load();
             print("Scene Loaded");
             Portal otherPortal = GetOtherPortal();
             UpdatePlayer(otherPortal);
 
-            //kamera'n?n stabilize olmas? için (vb.) gereken süre kadar bekliyoruz.
+            savingWrapper.Save();
+
+          
             yield return new WaitForSeconds(fadeWaitTime);
+           
             yield return fader.FadeIn(fadeInTime);
+           
             Destroy(gameObject);
         }
 
@@ -64,13 +71,19 @@ namespace RPG.SceneManagement
             }
             return null;
         }
-
+        
+   
         void UpdatePlayer(Portal otherPortal)
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
+
             player.GetComponent<NavMeshAgent>().Warp(otherPortal.spawnPoint.position);
+            // GetComponent<NavMeshAgent>().enabled = false;
+            //player.transform.position = other.portal.spawnPoint.position;
             player.transform.rotation = otherPortal.spawnPoint.rotation;
-           
+            // GetComponent<NavMeshAgent>().enabled = true;
+
+
         }
     }
 
