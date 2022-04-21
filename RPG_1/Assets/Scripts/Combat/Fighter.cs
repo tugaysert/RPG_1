@@ -1,5 +1,6 @@
 using RPG.Core;
 using RPG.Movement;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,14 +11,24 @@ namespace RPG.Combat
 {
     public class Fighter : MonoBehaviour, IAction
     {
-        [SerializeField] float weaponRange = 2f;
+        
         [SerializeField] float timeBetweenAttacks = 1f;
-        [SerializeField] float weaponDamage = 20.0f;
 
+        [SerializeField] Transform rightHandTransform = null;
+        [SerializeField] Transform leftHandTransform = null;
+        [SerializeField] Weapon defaultWeapon = null;  
        
         Health target;
-        //oyun baslar baslamaz vurabilelim
         public float timeSinceLastAttack = Mathf.Infinity;
+        Weapon currentWeapon = null; 
+
+
+        private void Start()
+        {
+            EquipWeapon(defaultWeapon);
+        }
+
+    
 
         private void Update()
         {
@@ -37,7 +48,18 @@ namespace RPG.Combat
                 AttackBehaviour();
             }
         }
-        //fighter.cs
+
+
+        public void EquipWeapon(Weapon weapon)
+        {
+
+            currentWeapon = weapon;
+            Animator animator = GetComponent<Animator>();
+            weapon.Spawn(rightHandTransform, leftHandTransform, animator);
+        }
+
+
+
         private void AttackBehaviour()
         { 
             transform.LookAt(target.transform);
@@ -59,17 +81,29 @@ namespace RPG.Combat
             GetComponent<Animator>().SetTrigger("attack");
         }
 
+        //fighter.cs
         //ANIMATION EVENT
         void Hit()
         {
             if(target== null) return;   
-            //target Health objesi field'?d?r.
-            target.TakeDamage(weaponDamage);
+
+            if(currentWeapon.HasProjectile())
+            {
+                currentWeapon.LaunchProjectile(rightHandTransform, leftHandTransform, target);
+            }
+            else
+            {
+                target.TakeDamage(currentWeapon.GetWeaponDamage());
+            }         
+        }
+        void Shoot()
+        {
+            Hit();
         }
 
         private bool GetIsInRange()
         {
-            return Vector3.Distance(transform.position, target.transform.position) < weaponRange;
+            return Vector3.Distance(transform.position, target.transform.position) < currentWeapon.GetWeaponRange();
         }
 
         public bool CanAttack(GameObject combatTarget)
